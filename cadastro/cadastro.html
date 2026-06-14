@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro | UltraNetX</title>
     <link rel="stylesheet" href="../css/cadastro.css">
-
 </head>
 
 <body>
@@ -168,6 +167,7 @@
         </section>
 
     </main>
+
     <script>
         const API_URL = "https://api-ultranetx.onrender.com";
 
@@ -284,6 +284,14 @@
             timerEmail = setTimeout(verificarEmail, 500);
         }
 
+        async function lerRespostaJson(resposta) {
+            try {
+                return await resposta.json();
+            } catch {
+                return {};
+            }
+        }
+
         async function verificarEmail() {
             const valor = email.value.trim().toLowerCase();
             const emailInfo = document.getElementById("emailInfo");
@@ -311,7 +319,7 @@
                 if (emailInfo) emailInfo.textContent = "Verificando e-mail...";
 
                 const resposta = await fetch(`${API_URL}/api/auth/check-email?email=${encodeURIComponent(valor)}`);
-                const dados = await resposta.json();
+                const dados = await lerRespostaJson(resposta);
 
                 if (!resposta.ok) {
                     if (emailInfo) emailInfo.textContent = dados.erro || "Erro ao verificar e-mail.";
@@ -333,7 +341,7 @@
                 emailValido = true;
                 validarBotaoCodigo();
 
-            } catch (error) {
+            } catch {
                 if (emailInfo) emailInfo.textContent = "Erro ao conectar com a API.";
                 if (emailStatus) emailStatus.textContent = "✕";
                 validarBotaoCodigo();
@@ -364,7 +372,7 @@
                     })
                 });
 
-                const dados = await resposta.json();
+                const dados = await lerRespostaJson(resposta);
 
                 if (!resposta.ok) {
                     alerta(dados.erro || "Erro ao enviar código.");
@@ -377,7 +385,7 @@
                     trocarEtapa(2);
                 }, 400);
 
-            } catch (error) {
+            } catch {
                 alerta("Erro ao conectar com a API.");
             } finally {
                 btnCodigo.textContent = "Enviar código";
@@ -408,7 +416,7 @@
                     })
                 });
 
-                const dados = await resposta.json();
+                const dados = await lerRespostaJson(resposta);
 
                 if (!resposta.ok) {
                     if (codigoStatus) codigoStatus.textContent = "✕";
@@ -426,7 +434,7 @@
                     trocarEtapa(3);
                 }, 400);
 
-            } catch (error) {
+            } catch {
                 if (codigoStatus) codigoStatus.textContent = "✕";
                 alerta("Erro ao verificar código.");
             }
@@ -559,19 +567,15 @@
                     body: formData
                 });
 
-                const dados = await resposta.json();
+                const dados = await lerRespostaJson(resposta);
 
- if (!resposta.ok) {
-    if (resposta.status === 409) {
-        alerta("Esse nome de usuário já está sendo usado por outra pessoa.");
-    } else {
-        alerta(dados.erro || "Erro ao cadastrar.");
-    }
+                if (!resposta.ok) {
+                    alerta(dados.erro || "Erro ao cadastrar.");
 
-    btnFinalizar.disabled = false;
-    btnFinalizar.textContent = "Finalizar cadastro";
-    return;
-}
+                    btnFinalizar.disabled = false;
+                    btnFinalizar.textContent = "Finalizar cadastro";
+                    return;
+                }
 
                 localStorage.setItem("token", dados.token);
                 localStorage.setItem("usuario", JSON.stringify(dados.usuario));
@@ -582,7 +586,7 @@
                     window.location.href = "../login/login.html";
                 }, 1000);
 
-            } catch (error) {
+            } catch {
                 alerta("Erro ao conectar com a API.");
                 btnFinalizar.disabled = false;
                 btnFinalizar.textContent = "Finalizar cadastro";
