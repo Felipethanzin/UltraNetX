@@ -569,13 +569,22 @@
 
                 const dados = await lerRespostaJson(resposta);
 
-                if (!resposta.ok) {
-                    alerta(dados.erro || "Erro ao cadastrar.");
+if (!resposta.ok) {
 
-                    btnFinalizar.disabled = false;
-                    btnFinalizar.textContent = "Finalizar cadastro";
-                    return;
-                }
+    if (dados.erro.includes("nome")) {
+        alerta("❌ Esse nome de usuário já está sendo usado por outra pessoa.");
+    }
+    else if (dados.erro.includes("e-mail") || dados.erro.includes("email")) {
+        alerta("❌ Este e-mail já está cadastrado.");
+    }
+    else {
+        alerta(dados.erro || "Erro ao cadastrar.");
+    }
+
+    btnFinalizar.disabled = false;
+    btnFinalizar.textContent = "Finalizar cadastro";
+    return;
+}
 
                 localStorage.setItem("token", dados.token);
                 localStorage.setItem("usuario", JSON.stringify(dados.usuario));
