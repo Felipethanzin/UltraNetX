@@ -561,12 +561,17 @@
 
                 const dados = await resposta.json();
 
-                if (!resposta.ok) {
-                    alerta(dados.erro || "Erro ao cadastrar.");
-                    btnFinalizar.disabled = false;
-                    btnFinalizar.textContent = "Finalizar cadastro";
-                    return;
-                }
+ if (!resposta.ok) {
+    if (resposta.status === 409) {
+        alerta("Esse nome de usuário já está sendo usado por outra pessoa.");
+    } else {
+        alerta(dados.erro || "Erro ao cadastrar.");
+    }
+
+    btnFinalizar.disabled = false;
+    btnFinalizar.textContent = "Finalizar cadastro";
+    return;
+}
 
                 localStorage.setItem("token", dados.token);
                 localStorage.setItem("usuario", JSON.stringify(dados.usuario));
