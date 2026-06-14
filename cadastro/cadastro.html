@@ -187,10 +187,15 @@
         const btnPerfil = document.getElementById("btnPerfil");
         const btnFinalizar = document.getElementById("btnFinalizar");
 
-        function alerta(msg, tipo = "erro") {
+        function alerta(msg, tipo = "erro", popup = false) {
             const alertaBox = document.getElementById("alerta");
             alertaBox.textContent = msg;
             alertaBox.className = `alert show ${tipo}`;
+            alertaBox.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            if (popup) {
+                window.alert(msg);
+            }
         }
 
         function limparAlerta() {
@@ -206,9 +211,7 @@
 
             const etapa = document.getElementById(`step${numero}`);
 
-            if (etapa) {
-                etapa.classList.add("active");
-            }
+            if (etapa) etapa.classList.add("active");
 
             document.querySelectorAll(".step-dot").forEach((dot, index) => {
                 dot.classList.toggle("active", index < numero);
@@ -258,9 +261,7 @@
             const text = document.getElementById("strengthText");
             const senhaStatus = document.getElementById("senhaStatus");
 
-            if (bar) {
-                bar.style.width = `${total * 20}%`;
-            }
+            if (bar) bar.style.width = `${total * 20}%`;
 
             if (text) {
                 if (total <= 2) text.textContent = "Senha fraca";
@@ -270,9 +271,7 @@
 
             senhaValida = total === 5;
 
-            if (senhaStatus) {
-                senhaStatus.textContent = senhaValida ? "✓" : "✕";
-            }
+            if (senhaStatus) senhaStatus.textContent = senhaValida ? "✓" : "✕";
 
             validarBotaoCodigo();
         }
@@ -354,7 +353,7 @@
 
         async function enviarCodigo() {
             if (!emailValido || !senhaValida) {
-                alerta("Digite um e-mail válido e uma senha forte.");
+                alerta("Digite um e-mail válido e uma senha forte.", "erro", true);
                 return;
             }
 
@@ -375,7 +374,7 @@
                 const dados = await lerRespostaJson(resposta);
 
                 if (!resposta.ok) {
-                    alerta(dados.erro || "Erro ao enviar código.");
+                    alerta(dados.erro || "Erro ao enviar código.", "erro", true);
                     return;
                 }
 
@@ -386,7 +385,7 @@
                 }, 400);
 
             } catch {
-                alerta("Erro ao conectar com a API.");
+                alerta("Erro ao conectar com a API.", "erro", true);
             } finally {
                 btnCodigo.textContent = "Enviar código";
                 validarBotaoCodigo();
@@ -400,7 +399,7 @@
 
             if (!/^\d{6}$/.test(codigo)) {
                 if (codigoStatus) codigoStatus.textContent = "✕";
-                alerta("Digite o código de 6 dígitos.");
+                alerta("Digite o código de 6 dígitos.", "erro", true);
                 return;
             }
 
@@ -421,7 +420,7 @@
                 if (!resposta.ok) {
                     if (codigoStatus) codigoStatus.textContent = "✕";
                     emailVerificado = false;
-                    alerta(dados.erro || "Código inválido.");
+                    alerta(dados.erro || "Código inválido.", "erro", true);
                     return;
                 }
 
@@ -436,7 +435,7 @@
 
             } catch {
                 if (codigoStatus) codigoStatus.textContent = "✕";
-                alerta("Erro ao verificar código.");
+                alerta("Erro ao verificar código.", "erro", true);
             }
         }
 
@@ -455,9 +454,7 @@
                 usuarioInfo.textContent = `${nome.length}/20 caracteres — mínimo 3`;
             }
 
-            if (usuarioStatus) {
-                usuarioStatus.textContent = nomeOk ? "✓" : "✕";
-            }
+            if (usuarioStatus) usuarioStatus.textContent = nomeOk ? "✓" : "✕";
 
             let idadeOk = false;
 
@@ -478,9 +475,7 @@
                     idadeInfo.textContent = idadeOk ? "Idade válida." : "Você precisa ter no mínimo 16 anos.";
                 }
 
-                if (idadeStatus) {
-                    idadeStatus.textContent = idadeOk ? "✓" : "✕";
-                }
+                if (idadeStatus) idadeStatus.textContent = idadeOk ? "✓" : "✕";
             } else {
                 if (idadeInfo) idadeInfo.textContent = "Somente maiores de 16 anos.";
                 if (idadeStatus) idadeStatus.textContent = "✕";
@@ -494,7 +489,7 @@
             validarPerfilCampos();
 
             if (!perfilValido) {
-                alerta("Preencha o perfil corretamente.");
+                alerta("Preencha o perfil corretamente.", "erro", true);
                 return;
             }
 
@@ -534,9 +529,7 @@
                 preview.style.display = "block";
             }
 
-            if (fotoInfo) {
-                fotoInfo.textContent = "Foto selecionada.";
-            }
+            if (fotoInfo) fotoInfo.textContent = "Foto selecionada.";
 
             fotoValida = true;
             btnFinalizar.disabled = false;
@@ -546,7 +539,7 @@
             e.preventDefault();
 
             if (!emailValido || !senhaValida || !emailVerificado || !perfilValido || !fotoValida) {
-                alerta("Complete todos os passos corretamente e verifique o e-mail.");
+                alerta("Complete todos os passos corretamente e verifique o e-mail.", "erro", true);
                 return;
             }
 
@@ -568,35 +561,46 @@
                 });
 
                 const dados = await lerRespostaJson(resposta);
+                const mensagemErro = String(dados.erro || "").toLowerCase();
 
-if (!resposta.ok) {
+                if (!resposta.ok) {
+                    let mensagem = dados.erro || "Erro ao cadastrar.";
 
-    if (dados.erro.includes("nome")) {
-        alerta("❌ Esse nome de usuário já está sendo usado por outra pessoa.");
-    }
-    else if (dados.erro.includes("e-mail") || dados.erro.includes("email")) {
-        alerta("❌ Este e-mail já está cadastrado.");
-    }
-    else {
-        alerta(dados.erro || "Erro ao cadastrar.");
-    }
+                    if (resposta.status === 409) {
+                        if (
+                            mensagemErro.includes("nome") ||
+                            mensagemErro.includes("usuário") ||
+                            mensagemErro.includes("usuario")
+                        ) {
+                            mensagem = "❌ Esse nome de usuário já está sendo usado por outra pessoa.";
+                        } else if (
+                            mensagemErro.includes("e-mail") ||
+                            mensagemErro.includes("email")
+                        ) {
+                            mensagem = "❌ Este e-mail já está cadastrado.";
+                        } else {
+                            mensagem = "❌ E-mail ou nome de usuário já está sendo usado.";
+                        }
+                    }
 
-    btnFinalizar.disabled = false;
-    btnFinalizar.textContent = "Finalizar cadastro";
-    return;
-}
+                    alerta(mensagem, "erro", true);
+
+                    btnFinalizar.disabled = false;
+                    btnFinalizar.textContent = "Finalizar cadastro";
+                    return;
+                }
 
                 localStorage.setItem("token", dados.token);
                 localStorage.setItem("usuario", JSON.stringify(dados.usuario));
 
-                alerta("Cadastro realizado com sucesso!", "sucesso");
+                alerta("Cadastro realizado com sucesso!", "sucesso", true);
 
                 setTimeout(() => {
                     window.location.href = "../login/login.html";
                 }, 1000);
 
             } catch {
-                alerta("Erro ao conectar com a API.");
+                alerta("Erro ao conectar com a API.", "erro", true);
                 btnFinalizar.disabled = false;
                 btnFinalizar.textContent = "Finalizar cadastro";
             }
